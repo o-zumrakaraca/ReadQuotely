@@ -1,0 +1,12 @@
+# Sanal Ortam
+venv/
+env/
+
+# Python Önbellek Dosyaları
+__pycache__/
+*.pyc
+
+# Veri tabanı ve gizli dosyalar
+instance/
+*.db
+.env
