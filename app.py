@@ -1,8 +1,16 @@
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import os # BİRİNCİ YENİLİK
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///readquotely.db'
+
+# İKİNCİ YENİLİK: Vercel'deysek /tmp klasörünü kullan, yereldeysek normal dosyayı
+if os.environ.get('VERCEL'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/readquotely.db'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///readquotely.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -52,7 +60,13 @@ class Tag(db.Model):
     __tablename__ = 'tags'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), unique=True, nullable=False)
+# ÜÇÜNCÜ YENİLİK: Veritabanı tablolarını ilk çalışmada otomatik oluştur
+with app.app_context():
+    db.create_all()
 
+# ==========================================
+# --- API ENDPOINTS (UÇ NOKTALAR) ---
+# ==========================================
 
 #1 
 @app.route('/', methods=['GET'])
