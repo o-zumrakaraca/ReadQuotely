@@ -1,20 +1,17 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///readquotely.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# --- ARA TABLO ---
 quote_tags = db.Table('quote_tags',
     db.Column('quote_id', db.Integer, db.ForeignKey('quotes.id'), primary_key=True),
     db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'), primary_key=True)
 )
 
-# --- VARLIK MODELLERİ ---
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -56,39 +53,35 @@ class Tag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), unique=True, nullable=False)
 
-# ==========================================
-# --- API ENDPOINTS (UÇ NOKTALAR) ---
-# ==========================================
 
-# 1. API Çalışıyor mu Kontrolü (Ana Sayfa)
+#1 
 @app.route('/', methods=['GET'])
 def home():
-    return jsonify({"mesaj": "ReadQuotely API basariyla calisiyor!"}), 200
-
-# 2. Yeni Kullanıcı Ekleme
+    return render_template('index.html')
+#2
 @app.route('/api/users', methods=['POST'])
 def create_user():
-    data = request.get_json() # Gelen JSON verisini al
+    data = request.get_json()
     
     yeni_kullanici = User(
         username=data['username'],
         email=data['email'],
-        password_hash=data['password'] # Gerçek projelerde şifrelenir, şimdilik düz metin
+        password_hash=data['password'] 
     )
     
     db.session.add(yeni_kullanici)
-    db.session.commit() # Veritabanına kaydet
+    db.session.commit() 
     
     return jsonify({"mesaj": "Kullanici basariyla olusturuldu!"}), 201
 
-# 3. Tüm Kullanıcıları Listeleme
+# 3
 @app.route('/api/users', methods=['GET'])
 def get_users():
     users = User.query.all()
-    # Veritabanındaki objeleri JSON formatına çevir
     result = [{"id": u.id, "username": u.username, "email": u.email} for u in users]
     return jsonify(result), 200
-# 4. Yeni Kitap Ekleme
+
+# 4
 @app.route('/api/books', methods=['POST'])
 def create_book():
     data = request.get_json()
@@ -106,14 +99,14 @@ def create_book():
     
     return jsonify({"mesaj": "Kitap basariyla eklendi!"}), 201
 
-# 5. Yeni Alıntı/Not Ekleme
+# 5
 @app.route('/api/quotes', methods=['POST'])
 def create_quote():
     data = request.get_json()
     
     yeni_alinti = Quote(
-        book_id=data['book_id'], # Hangi kitaba ait
-        user_id=data['user_id'], # Kim ekledi
+        book_id=data['book_id'], 
+        user_id=data['user_id'], 
         quote_text=data['quote_text'],
         page_number=data.get('page_number', 0),
         personal_note=data.get('personal_note', '')
@@ -123,10 +116,10 @@ def create_quote():
     db.session.commit()
     
     return jsonify({"mesaj": "Alinti basariyla eklendi!"}), 201
-# 6. Kitapları ve İçindeki Alıntıları Beraber Getirme
+#6 
 @app.route('/api/books', methods=['GET'])
 def get_all_books():
-    books = Book.query.all() # Veritabanındaki tüm kitapları çek
+    books = Book.query.all() 
     result = []
     
     for book in books:
@@ -136,7 +129,6 @@ def get_all_books():
             "author": book.author,
             "genre": book.genre,
             "total_pages": book.total_pages,
-            # Kitaba ait olan alıntıları da bir liste olarak içine ekliyoruz
             "quotes": [
                 {
                     "id": quote.id, 
